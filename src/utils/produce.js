@@ -1,4 +1,4 @@
-const {topic, clientId, brokers} = require("../config/kafka")
+const {clientId, brokers} = require("../config/kafka")
 const scripts = require("../data/scripts")
 const {Kafka} = require("kafkajs");
 
@@ -12,7 +12,7 @@ const produce = () => new Promise((
     producer.connect().then(() => {
         const scriptTemp = []
         scripts.forEach((script) => {
-            scriptTemp.push(...(new Array(script.iterations).fill(script.value)))
+            scriptTemp.push(...(new Array(script.iterations).fill({ value: script.value, topic: script.topic })))
         })
 
         let i = 0
@@ -21,13 +21,13 @@ const produce = () => new Promise((
                 // send a message to the configured topic with
                 // the key and value formed from the current value of `i`
                 await producer.send({
-                    topic,
+                    topic: scriptTemp[i].topic,
                     messages: [
                         {
                             key: "",
-                            value: typeof scriptTemp[i] === "object"
-                                ? JSON.stringify(scriptTemp[i])
-                                : scriptTemp,
+                            value: typeof scriptTemp[i].value === "object"
+                                ? JSON.stringify(scriptTemp[i].value)
+                                : scriptTemp.value,
                         },
                     ],
                 })
